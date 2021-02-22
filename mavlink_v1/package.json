@@ -1,5 +1,5 @@
  {
-    "name" : "mavlink_all_v2.0",
+    "name" : "mavlink_all_v1.0",
     "version" : "0.0.1",
     "description" : "NextGen Implementation of the MAVLink protocol",
     "keywords" : ["mavlink", "arduino", "megapilot", "ros", "robot", "uav", "drone", "awesome"],

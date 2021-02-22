@@ -16955,7 +16955,6 @@ MAVLink20Processor.prototype.parsePrefix = function() {
 
     // Test for a message prefix.
     if( this.buf.length >= 1 && this.buf[0] != this.protocol_marker ) {
-
         // Strip the offending initial byte and throw an error.
         var badPrefix = this.buf[0];
         this.bufInError = this.buf.slice(0,1);
@@ -17210,7 +17209,6 @@ MAVLink20Processor.prototype.decode = function(msgbuf) {
     //  TODO allow full parsing of 1.0 inside the 2.0 parser, this is just a start 
     if (magic == mavlink20.PROTOCOL_MARKER_V1){ 
             //headerlen = 6; 
-             
             // these two are in the same place in both v1 and v2 so no change needed: 
             //magic = magic; 
             //mlen = mlen; 
