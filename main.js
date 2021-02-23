@@ -38,14 +38,32 @@
 // }, 1500)
 
 var Mavlink = require('./ab_zero')
-let {mavlink10, MAVLink10Processor} = require('./mavlink_v1/mavlink')
+let {mav01, MAVLink10Processor} = require('./mavlink_v1/mavlink')
 
-mav = new Mavlink(1, 1, '/dev/ttyACM0');
-mav.subscribe('MESSAGE_INTERVAL', (msg) => {
-    var s = `ID: ${msg.message_id}\t INTERVAL: ${msg.interval_us}`
+mav = new Mavlink(255, 1, '/dev/ttyACM0');
+
+function log_mesg_interval (msg) {
+    var s = `ID: ${msg.message_id}\tINTERVAL: ${msg.interval_us}`;
+    console.log(s);
+}
+mav.subscribe('MESSAGE_INTERVAL', log_mesg_interval)
+
+mav.subscribe('COMMAND_ACK', msg => {
+    var s = `COMMAND: ${msg.command}\tRESULT: ${msg.result}`;
+    console.log(s)
+})
+
+mav.subscribe("ATTITUDE", msg => {
+    var s = `ROLL: ${msg.roll}\tPITCH: ${msg.pitch}\tYAW ${msg.yaw}`;
     console.log(s)
 })
 
 setInterval(() => {
-    mav.sendCommand(1,1, mavlink10.MAV_CMD_GET_MESSAGE_INTERVAL, mavlink10.MAVLINK_MSG_ID_RAW_IMU)
+    mav.sendCommand(mav01.MAV_CMD_SET_MESSAGE_INTERVAL,
+        mav01.MAVLINK_MSG_ID_ATTITUDE, 1000000, 0)
 }, 1000)
+
+setInterval(() => {
+    mav.sendCommand(mav01.MAV_CMD_GET_MESSAGE_INTERVAL,
+        mav01.MAVLINK_MSG_ID_ATTITUDE)
+}, 1500)
