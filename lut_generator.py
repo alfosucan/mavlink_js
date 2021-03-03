@@ -29,6 +29,7 @@ class lut_generator():
     def generate_str_to_id_lut(self):
         self.str_to_id = "const mavID = {"
         for key, value in self.definitions.items():
+            key = key.replace('MAVLINK_MSG_ID_', '')
             self.str_to_id += '\'{}\': {},\n'.format(key, value)
         self.str_to_id += "};\n"
 
