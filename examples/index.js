@@ -1,6 +1,6 @@
 
 
-var Mavlink = require('./ab_zero')
+var Mavlink = require('mavlink')
 
 mav = new Mavlink(255, 1, '/dev/ttyACM0');
 
