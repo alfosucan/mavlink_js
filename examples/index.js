@@ -2,36 +2,31 @@
 
 var Mavlink = require('mavlink')
 
-mav = new Mavlink(255, 1, '/dev/ttyACM0');
-
+mav = new Mavlink(255, 1, '/dev/ttyACM1');
 
 /**
  * Disable ATTITUDE messages setting a rate of -1
  */
-mav.sendCommand(
-    'MAV_CMD_SET_MESSAGE_INTERVAL', 'ATTITUDE', -1, 0)
+mav.sendCommand('MAV_CMD_SET_MESSAGE_INTERVAL', 'ATTITUDE', -1, 0)
 
 mav.subscribe('ATTITUDE', msg => {
   console.log('ATTITUDE')
   console.log(`roll:\t${msg.roll}\npitch:\t${msg.pitch}\nyaw:\t${msg.yaw}`);
   mav.unsubscribe('ATTITUDE')
 });
+
 mav.requestMessage('ATTITUDE')
 
 /**Set message interval at some rate (time in us) */
-
-mav.sendCommand(
-    'MAV_CMD_SET_MESSAGE_INTERVAL', 'ATTITUDE', 3000, 0)
+mav.sendCommand('MAV_CMD_SET_MESSAGE_INTERVAL', 'ATTITUDE', 500000, 0)
 
 // Request autopilot capabilities
 mav.subscribe('AUTOPILOT_VERSION', msg => {
-  let mask = 1 << 16; //official docs
+  let mask = 1 << 16;  // official docs
   console.log(`Rally points supported: ${msg.capabilities[0] & mask}`)
 })
-setInterval(
-    () => {
-        mav.requestMessage('AUTOPILOT_VERSION')},
-    2000)
+
+setInterval(() => {mav.requestMessage('AUTOPILOT_VERSION')}, 2000)
 
 
 mav.sendCommand(

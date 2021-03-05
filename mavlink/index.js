@@ -31,17 +31,20 @@ class MavLink {
 
     this.ssyd = ssyd;
     this.component_id = component_id;
-
-    try {
-      this.serial = new SerialPort(port, {
-        baudRate: 921600,
-        autoOpen: false,  // end class construction before opening coms
-        parity: 'none',
-        dataBits: 8,
-        stopBits: 1
-      });
-    } catch (error) {
-      throw Error(error)
+    if (typeof port == 'string') {
+      try {
+        this.serial = new SerialPort(port, {
+          baudRate: 921600,
+          autoOpen: false,  // end class construction before opening coms
+          parity: 'none',
+          dataBits: 8,
+          stopBits: 1
+        });
+      } catch (error) {
+        throw Error(error)
+      }
+    } else {
+      this.serial = port;
     }
     this.mav = new this.mavlinkProcessor(null, ssyd, component_id);
     this.serial.on('data', raw_buffer => {
