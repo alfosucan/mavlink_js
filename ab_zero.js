@@ -1,5 +1,4 @@
 var SerialPort = require('serialport');
-const mav_def = require('./mavlink_v1/mavlink.lut');
 
 var command_Q = [];
 
@@ -48,10 +47,15 @@ class MavLink {
     this.serial.on('data', raw_buffer => {
       this.mav.parseBuffer(raw_buffer);
     });
+
     this.subscribe('COMMAND_ACK', this.commandACKCallback)
+
+    // set a periodic clean up task to avoid possible heap overflow
+    // if a message is not correctly sent
     setInterval(this.clearCommandQ, 1000);
     this.serial.open()
   }
+
   clearCommandQ() {
     let now = Date.now();
     for (var i = 0; i < command_Q.length; i++) {
@@ -66,24 +70,24 @@ class MavLink {
   }
 
   sendCommand(command, ...params) {
-    let cmd_id = mavID[command]
-        // avoid send until is already been processed
-        let index = command_Q.findIndex(
-            val => val.command == cmd_id & val.params == params);
+    let cmd_id = mavID[command];
+    // avoid send until is already been processed
+    let index = command_Q.findIndex(
+        val => val.command == cmd_id & val.params == params);
     if (index > -1) {
       log_to_console(`Message ${command} already sent`)
       return;
     }
     let now = Date.now();
     if (typeof params[0] == 'string') {
-        params[0] = mavID[params[0]]
-        }
+      params[0] = mavID[params[0]]
+    }
     var command_msg =
-    new this.mavlink_.messages.command_long(2, 1, cmd_id, 101, ...params);
+        new this.mavlink_.messages.command_long(2, 1, cmd_id, 101, ...params);
     log_to_console(
         `Sending:\nCOMMAND:\t${command}\nID:\t${cmd_id}\nPARARMS:\t${params}`);
-        var buff = new Buffer.from(command_msg.pack(this.mav));
-        this.serial.write(buff);
+    var buff = new Buffer.from(command_msg.pack(this.mav));
+    this.serial.write(buff);
     command_Q.push({name: command, command: cmd_id, params: params, time: now});
   }
 
@@ -124,13 +128,6 @@ class MavLink {
     }
   }
 
-    appendMsgString(mav_msg) {
-        if (mav_msg.indexOf('MAVLINK_MSG_ID_') < 0) {
-            mav_msg = 'MAVLINK_MSG_ID_' + mav_msg
-        }
-        return mav_msg;
-    }
-
   requestMessage(mav_msg) {
     this.sendCommand(
         'MAV_CMD_REQUEST_MESSAGE', mavID[mav_msg], 0, 0, 0, 0, 0, 1)
@@ -139,25 +136,26 @@ class MavLink {
   async getInfo(msg_name, mav_msg) {
     let promise = new Promise((resolve, reject) => {
       // set timeout for rejection
-            var t_out =setTimeout(() => {
-                this.mav.removeAllListeners(msg_name)
-                reject(`Cannot get info for ${msg_name} with MAV_ID ${mav_msg}`)
-            }, 2000);
+      var t_out = setTimeout(() => {
+        this.mav.removeAllListeners(msg_name)
+        reject(`Cannot get info for ${msg_name} with MAV_ID ${mav_msg}`)
+      }, 2000)
 
-                // subscribe to msg type
-                this.subscribe(msg_name, (msg) => {
-                  let info_obj = new Object();
+      // subscribe to msg type
+      this.subscribe(msg_name, (msg) => {
+        let info_obj = new Object();
 
-                  this.requestMessage(mav_msg);  // request msg
+        this.requestMessage(mav_msg);  // request msg
 
-                  info_obj.name = msg_name
-                  msg.fieldnames.forEach(field => {
-                    info_obj[field] = msg[field];
-                  })
-                  clearTimeout(t_out);
-                  this.mav.removeAllListeners(msg_name)
-                  resolve(info_obj);
-                })
+        info_obj.name = msg_name
+        msg.fieldnames.forEach(field => {
+          info_obj[field] = msg[field];
+        })
+        clearTimeout(t_out);
+
+        this.mav.removeAllListeners(msg_name)
+        resolve(info_obj);
+      });
     })
 
     let info = await promise
